@@ -1,29 +1,31 @@
 package main
 
 import (
+	awesome "awesomeProject"
 	"awesomeProject/pkg/handler"
+	"awesomeProject/pkg/repository"
+	"awesomeProject/pkg/service"
 	"github.com/spf13/viper"
 	"log"
 )
 
 func main() {
-	handlers := new(handler.Handler)
-	router := handlers.InitRouters()
-	err := router.Run(":8080")
-	if err != nil {
-		log.Println(err)
+	if err := initCongig(); err != nil {
+		log.Fatalf("error initializing config")
 	}
-	//
-	//srv := new(awesome.Server)
-	//if err := srv.Run("8000", handlers.InitRouters()); err != nil {
-	//	log.Fatalf("error occured while running server: %s", err.Error())
-	//
-	//}
+
+	repos := repository.NewRepository()
+	services := service.NewService(repos)
+	handlers := handler.NewHandler(services)
+
+	srv := new(awesome.Server)
+	if err := srv.Run(viper.GetString("port"), handlers.InitRouters()); err != nil {
+		log.Fatalf("error occured while running server: %s", err.Error())
+	}
 }
 
 func initCongig() error {
 	viper.AddConfigPath("configs")
 	viper.SetConfigName("config")
-
 	return viper.ReadInConfig()
 }
